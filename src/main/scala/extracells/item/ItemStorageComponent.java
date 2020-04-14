@@ -53,7 +53,8 @@ public class ItemStorageComponent extends ItemECBase implements IStorageComponen
 
 	@Override
 	public String getUnlocalizedName(ItemStack itemStack) {
-		return String.format("extracells.item.storage.component.%s", this.suffixes[itemStack.getItemDamage()]);
+		return "extracells.item.storage.component."
+				+ this.suffixes[itemStack.getItemDamage()];
 	}
 
 	@Override
@@ -66,8 +67,8 @@ public class ItemStorageComponent extends ItemECBase implements IStorageComponen
 		this.icons = new IIcon[this.suffixes.length];
 
 		for (int i = 0; i < this.suffixes.length; ++i) {
-			this.icons[i] = iconRegister.registerIcon(
-					String.format("extracells:storage.component.%s", this.suffixes[i]));
+			this.icons[i] = iconRegister.registerIcon("extracells:"
+					+ "storage.component." + this.suffixes[i]);
 		}
 	}
 }

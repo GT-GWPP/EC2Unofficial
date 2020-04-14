@@ -11,12 +11,4 @@ public interface IBlockDefinition {
 	ITileDefinition fluidCrafter();
 
 	ITileDefinition fluidFiller();
-
-	ITileDefinition craftingStorage256k();
-
-	ITileDefinition craftingStorage1024k();
-
-	ITileDefinition craftingStorage4096k();
-
-	ITileDefinition craftingStorage16384k();
 }
