@@ -190,7 +190,6 @@ public class TileEntityFluidInterface extends TileBase implements
 	private final Item encodedPattern = AEApi.instance().definitions().items().encodedPattern()
 			.maybeItem().orNull();
 	private List<IAEStack> export = new ArrayList<IAEStack>();
-	private List<IAEStack> removeFromExport = new ArrayList<IAEStack>();
 
 	private List<IAEStack> addToExport = new ArrayList<IAEStack>();
 
@@ -236,7 +235,7 @@ public class TileEntityFluidInterface extends TileBase implements
 
 	@Override
 	public FluidStack drain(ForgeDirection from, FluidStack resource,
-			boolean doDrain) {
+							boolean doDrain) {
 		FluidStack tankFluid = this.tanks[from.ordinal()].getFluid();
 		if (resource == null || tankFluid == null
 				|| tankFluid.getFluid() != resource.getFluid())
@@ -267,7 +266,7 @@ public class TileEntityFluidInterface extends TileBase implements
 		if ((this.tanks[from.ordinal()].getFluid() == null || this.tanks[from
 				.ordinal()].getFluid().getFluid() == resource.getFluid())
 				&& resource.getFluid() == FluidRegistry
-						.getFluid(this.fluidFilter[from.ordinal()])) {
+				.getFluid(this.fluidFilter[from.ordinal()])) {
 			int added = this.tanks[from.ordinal()]
 					.fill(resource.copy(), doFill);
 			if (added == resource.amount) {
@@ -395,7 +394,7 @@ public class TileEntityFluidInterface extends TileBase implements
 
 	@Override
 	public IStorageMonitorable getMonitorable(ForgeDirection side,
-			BaseActionSource src) {
+											  BaseActionSource src) {
 		return this;
 	}
 
@@ -418,7 +417,7 @@ public class TileEntityFluidInterface extends TileBase implements
 
 	@Override
 	public List<String> getWailaBody(List<String> list, NBTTagCompound tag,
-			ForgeDirection side) {
+									 ForgeDirection side) {
 		if (side == null || side == ForgeDirection.UNKNOWN)
 			return list;
 		list.add(StatCollector.translateToLocal("extracells.tooltip.direction."
@@ -450,7 +449,7 @@ public class TileEntityFluidInterface extends TileBase implements
 			list.add(StatCollector.translateToLocal("extracells.tooltip.fluid")
 					+ ": "
 					+ StatCollector
-							.translateToLocal("extracells.tooltip.empty1"));
+					.translateToLocal("extracells.tooltip.empty1"));
 			list.add(StatCollector
 					.translateToLocal("extracells.tooltip.amount")
 					+ ": 0mB / 10000mB");
@@ -524,7 +523,7 @@ public class TileEntityFluidInterface extends TileBase implements
 
 				if (currentPattern != null
 						&& currentPattern.getPatternForItem(
-								currentPatternStack, getWorldObj()) != null) {
+						currentPatternStack, getWorldObj()) != null) {
 					IFluidCraftingPatternDetails pattern = new CraftingPattern2(
 							currentPattern.getPatternForItem(
 									currentPatternStack, getWorldObj()));
@@ -542,13 +541,7 @@ public class TileEntityFluidInterface extends TileBase implements
 	}
 
 	private void pushItems() {
-		for (IAEStack s : this.removeFromExport) {
-			this.export.remove(s);
-		}
-		this.removeFromExport.clear();
-		for (IAEStack s : this.addToExport) {
-			this.export.add(s);
-		}
+		this.export.addAll(this.addToExport);
 		this.addToExport.clear();
 		if (!hasWorldObj() || this.export.isEmpty())
 			return;
@@ -558,7 +551,7 @@ public class TileEntityFluidInterface extends TileBase implements
 					this.xCoord + dir.offsetX, this.yCoord + dir.offsetY,
 					this.zCoord + dir.offsetZ);
 			if (tile != null) {
-				IAEStack stack0 = this.export.iterator().next();
+				IAEStack stack0 = this.export.get(0);
 				IAEStack stack = stack0.copy();
 				if (stack instanceof IAEItemStack && tile instanceof IInventory) {
 					if (tile instanceof ISidedInventory) {
@@ -572,7 +565,7 @@ public class TileEntityFluidInterface extends TileBase implements
 									inv.setInventorySlotContents(i,
 											((IAEItemStack) stack)
 													.getItemStack());
-									this.removeFromExport.add(stack0);
+									this.export.remove(0);
 									return;
 								} else if (ItemUtils.areItemEqualsIgnoreStackSize(
 										inv.getStackInSlot(i),
@@ -587,17 +580,14 @@ public class TileEntityFluidInterface extends TileBase implements
 												.copy();
 										s.stackSize = s.stackSize + outStack;
 										inv.setInventorySlotContents(i, s);
-										this.removeFromExport.add(stack0);
+										this.export.remove(0);
 										return;
 									} else {
 										ItemStack s = inv.getStackInSlot(i)
 												.copy();
 										s.stackSize = max;
 										inv.setInventorySlotContents(i, s);
-										this.removeFromExport.add(stack0);
-										stack.setStackSize(outStack - max
-												+ current);
-										this.addToExport.add(stack);
+										this.export.get(0).setStackSize(outStack - max + current);
 										return;
 									}
 								}
@@ -612,7 +602,7 @@ public class TileEntityFluidInterface extends TileBase implements
 									inv.setInventorySlotContents(i,
 											((IAEItemStack) stack)
 													.getItemStack());
-									this.removeFromExport.add(stack0);
+									this.export.remove(0);
 									return;
 								} else if (ItemUtils.areItemEqualsIgnoreStackSize(
 										inv.getStackInSlot(i),
@@ -627,17 +617,14 @@ public class TileEntityFluidInterface extends TileBase implements
 												.copy();
 										s.stackSize = s.stackSize + outStack;
 										inv.setInventorySlotContents(i, s);
-										this.removeFromExport.add(stack0);
+										this.export.remove(0);
 										return;
 									} else {
 										ItemStack s = inv.getStackInSlot(i)
 												.copy();
 										s.stackSize = max;
 										inv.setInventorySlotContents(i, s);
-										this.removeFromExport.add(stack0);
-										stack.setStackSize(outStack - max
-												+ current);
-										this.addToExport.add(stack);
+										this.export.get(0).setStackSize(outStack - max + current);
 										return;
 									}
 								}
@@ -657,15 +644,11 @@ public class TileEntityFluidInterface extends TileBase implements
 						if (amount == fluid.getStackSize()) {
 							handler.fill(dir.getOpposite(), fluid
 									.getFluidStack().copy(), true);
-							this.removeFromExport.add(stack0);
+							this.export.remove(0);
 						} else {
-							IAEFluidStack f = fluid.copy();
-							f.setStackSize(f.getStackSize() - amount);
 							FluidStack fl = fluid.getFluidStack().copy();
 							fl.amount = amount;
-							handler.fill(dir.getOpposite(), fl, true);
-							this.removeFromExport.add(stack0);
-							this.addToExport.add(f);
+							this.export.get(0).setStackSize(fluid.getStackSize() - handler.fill(dir.getOpposite(), fl, true));
 							return;
 						}
 					}
@@ -676,7 +659,7 @@ public class TileEntityFluidInterface extends TileBase implements
 
 	@Override
 	public boolean pushPattern(ICraftingPatternDetails patDetails,
-			InventoryCrafting table) {
+							   InventoryCrafting table) {
 		if (isBusy() || !this.patternConvert.containsKey(patDetails))
 			return false;
 		ICraftingPatternDetails patternDetails = this.patternConvert
@@ -772,31 +755,8 @@ public class TileEntityFluidInterface extends TileBase implements
 
 	private void readOutputFromNBT(NBTTagCompound tag) {
 		this.addToExport.clear();
-		this.removeFromExport.clear();
 		this.export.clear();
-		int i = tag.getInteger("remove");
-		for (int j = 0; j < i; j++) {
-			if (tag.getBoolean("remove-" + j + "-isItem")) {
-				IAEItemStack s = AEApi
-						.instance()
-						.storage()
-						.createItemStack(
-								ItemStack.loadItemStackFromNBT(tag
-										.getCompoundTag("remove-" + j)));
-				s.setStackSize(tag.getLong("remove-" + j + "-amount"));
-				this.removeFromExport.add(s);
-			} else {
-				IAEFluidStack s = AEApi
-						.instance()
-						.storage()
-						.createFluidStack(
-								FluidStack.loadFluidStackFromNBT(tag
-										.getCompoundTag("remove-" + j)));
-				s.setStackSize(tag.getLong("remove-" + j + "-amount"));
-				this.removeFromExport.add(s);
-			}
-		}
-		i = tag.getInteger("add");
+		int i = tag.getInteger("add");
 		for (int j = 0; j < i; j++) {
 			if (tag.getBoolean("add-" + j + "-isItem")) {
 				IAEItemStack s = AEApi
@@ -905,7 +865,7 @@ public class TileEntityFluidInterface extends TileBase implements
 		for (int i = 0; i < this.tanks.length; i++) {
 			if (this.tanks[i].getFluid() != null
 					&& FluidRegistry.getFluid(this.fluidFilter[i]) != this.tanks[i]
-							.getFluid().getFluid()) {
+					.getFluid().getFluid()) {
 				FluidStack s = this.tanks[i].drain(125, false);
 				if (s != null) {
 					IAEFluidStack notAdded = storage.getFluidInventory()
@@ -1007,21 +967,6 @@ public class TileEntityFluidInterface extends TileBase implements
 
 	private NBTTagCompound writeOutputToNBT(NBTTagCompound tag) {
 		int i = 0;
-		for (IAEStack s : this.removeFromExport) {
-			if (s != null) {
-				tag.setBoolean("remove-" + i + "-isItem", s.isItem());
-				NBTTagCompound data = new NBTTagCompound();
-				if (s.isItem()) {
-					((IAEItemStack) s).getItemStack().writeToNBT(data);
-				} else {
-					((IAEFluidStack) s).getFluidStack().writeToNBT(data);
-				}
-				tag.setTag("remove-" + i, data);
-				tag.setLong("remove-" + i + "-amount", s.getStackSize());
-			}
-			i++;
-		}
-		tag.setInteger("remove", this.removeFromExport.size());
 		i = 0;
 		for (IAEStack s : this.addToExport) {
 			if (s != null) {
